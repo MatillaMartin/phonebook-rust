@@ -98,10 +98,11 @@ impl ConsoleFrontend
 
     fn phonebook_print_contact(contact: &Contact)
     {
-        println!("Name:\t{}", contact.name);
-        println!("Mobile:\t{}", contact.mobile);
+        println!("Name:\t\t{}", contact.name);
+        println!("Mobile:\t\t{}", contact.mobile);
         println!("Address:\t{}", contact.address);
-        println!("Email:\t{}", contact.email);
+        println!("Email:\t\t{}", contact.email);
+        println!("------");
     }
 
     fn phonebook_print(phonebook: &PhoneBook)
