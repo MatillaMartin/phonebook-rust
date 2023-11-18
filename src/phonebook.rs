@@ -18,6 +18,10 @@ impl Default for PhoneBook
 
 impl PhoneBook
 {
+    pub fn new(contacts: Vec<Contact>) -> Self
+    {
+        return Self{contacts};
+    }
     pub fn get_all(&self) -> Vec<Contact>
     {
         return self.contacts.clone();
