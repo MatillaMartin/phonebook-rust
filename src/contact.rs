@@ -1,4 +1,5 @@
-#[derive(Clone)]
+use serde::{Serialize, Deserialize};
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Contact
 {
     pub name: String,
