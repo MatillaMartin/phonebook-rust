@@ -6,14 +6,18 @@ use std::path::Path;
 
 pub struct FilesystemBackend
 {
-    pub file_path: PathBuf
+    pub file_path: PathBuf,
+    pub folder_path: PathBuf
 }
 
 impl FilesystemBackend
 {
     pub fn new(folder_path : &Path)->Self
     {
-        return FilesystemBackend{file_path : folder_path.join("phonebook.yaml")};
+        return FilesystemBackend
+        {
+            folder_path : folder_path.to_path_buf(),
+            file_path : folder_path.join("phonebook.yaml")};
     }
 
     pub fn load(&self) -> std::io::Result<PhoneBook>
@@ -29,6 +33,7 @@ impl FilesystemBackend
 
     pub fn save(&self, phonebook: &PhoneBook) -> std::io::Result<()>
     {
+        std::fs::create_dir_all(&self.folder_path)?;
         // convert to yaml
         let yaml = serde_yaml::to_string(&phonebook.get_all()).expect("Unable to serialize contacts");
         // save to file
