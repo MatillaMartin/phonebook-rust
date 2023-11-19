@@ -23,6 +23,7 @@ impl ConsoleFrontend
     // runs application, action loop
     pub fn run(&self, phonebook: &mut PhoneBook)
     {
+        Self::print_intro(&phonebook);
         let mut run = true;
         while run
         {
@@ -45,9 +46,16 @@ impl ConsoleFrontend
         }
     }
 
-    fn print_menu()
+    fn print_intro(phonebook: &PhoneBook)
     {
         println!("PhoneBook Application");
+        println!("---------------------");
+        println!("Contacts: {}", phonebook.get_all().len());
+    }
+
+    fn print_menu()
+    {
+
         println!("---------------------");
         println!("[0] Print contacts");
         println!("[1] Add contact");
