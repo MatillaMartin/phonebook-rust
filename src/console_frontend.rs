@@ -1,27 +1,21 @@
 use std::io::Write;
 use crate::phonebook::PhoneBook;
 use crate::contact::Contact;
+use crate::phonebook_frontend::PhonebookFrontend;
 
-pub struct ConsoleFrontend
-{
-}
+pub struct ConsoleFrontend;
 
-impl Default for ConsoleFrontend
-{
-    fn default() -> ConsoleFrontend { ConsoleFrontend{} }
-}
 enum ConsoleAction
 {
     Add(),
     Remove(),
     Print(),
-    Close()
+    Close(),
 }
 
-impl ConsoleFrontend
+impl PhonebookFrontend for ConsoleFrontend
 {
-    // runs application, action loop
-    pub fn run(&self, phonebook: &mut PhoneBook)
+    fn run(phonebook: &mut PhoneBook)
     {
         Self::print_intro(&phonebook);
         let mut run = true;
@@ -30,8 +24,13 @@ impl ConsoleFrontend
             run = Self::run_actions(phonebook);
         }
     }
+}
 
-    pub fn run_actions(phonebook: &mut PhoneBook) -> bool
+
+impl ConsoleFrontend
+{
+    // runs application, action loop
+    fn run_actions(phonebook: &mut PhoneBook) -> bool
     {
         Self::print_menu();
         let input = Self::get_input();
@@ -42,8 +41,8 @@ impl ConsoleFrontend
             None => {
                 println!("Could not process action");
                 true
-            },
-        }
+            }
+        };
     }
 
     fn print_intro(phonebook: &PhoneBook)
@@ -55,14 +54,13 @@ impl ConsoleFrontend
 
     fn print_menu()
     {
-
         println!("---------------------");
         println!("[0] Print contacts");
         println!("[1] Add contact");
         println!("[2] Remove contact");
         println!("[3] Close");
         println!("Select action: ");
-        let _=std::io::stdout().flush();
+        let _ = std::io::stdout().flush();
     }
 
     fn get_input() -> String
@@ -81,7 +79,7 @@ impl ConsoleFrontend
             "2" => Some(ConsoleAction::Remove()),
             "3" => Some(ConsoleAction::Close()),
             _ => None,
-        }
+        };
     }
 
     fn run_action(action: ConsoleAction, phonebook: &mut PhoneBook) -> bool
@@ -91,17 +89,17 @@ impl ConsoleFrontend
             ConsoleAction::Print() => {
                 Self::phonebook_print(phonebook);
                 true
-            },
+            }
             ConsoleAction::Add() => {
                 Self::phonebook_add(phonebook);
                 true
-            },
+            }
             ConsoleAction::Remove() => {
                 Self::phonebook_remove(phonebook);
                 true
-            },
+            }
             ConsoleAction::Close() => false,
-        }
+        };
     }
 
     fn phonebook_print_contact(contact: &Contact)
@@ -148,7 +146,7 @@ impl ConsoleFrontend
         address = Self::get_input();
         println!("Email: ");
         email = Self::get_input();
-        let ok = phonebook.add(Contact{ name, email, address, mobile, });
+        let ok = phonebook.add(Contact { name, email, address, mobile });
         if !ok
         {
             println!("Could not add contact");
