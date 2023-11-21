@@ -15,7 +15,6 @@ fn contacts_to_table(contacts : Vec<Contact> )  -> String
     table_html.push_str("th { border: 1px solid #dddddd; text-align: left; padding: 8px; font-weight: bold; }\n");
     table_html.push_str("td { border: 1px solid #dddddd; text-align: left; padding: 8px; }\n");
     table_html.push_str("</style>\n");
-    table_html.push_str("<table>\n");
 
     // Start HTML table
     table_html.push_str("<table>\n");
