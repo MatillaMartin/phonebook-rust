@@ -11,3 +11,4 @@ serde_yaml = "0.9"
 directories = "5.0"
 axum = "0.6.20"
 tokio = { version = "1.0", features = ["full"] }
+build_html = "2.4.0"

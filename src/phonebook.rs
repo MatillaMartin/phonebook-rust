@@ -1,5 +1,6 @@
 use crate::contact::Contact;
 
+#[derive(Clone)]
 pub struct PhoneBook
 {
     contacts: Vec<Contact>,

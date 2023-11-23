@@ -1,49 +1,87 @@
 use crate::phonebook::PhoneBook;
 use crate::phonebook_frontend::PhonebookFrontend;
-use axum::{extract::State, Router, routing::get, Server, response::Html};
-use std::sync::Arc;
+use axum::{
+    extract::State,
+    Router,
+    routing::{get, post},
+    Server,
+    Form,
+    response::{Redirect}
+};
+
+use std::sync::{Arc, Mutex};
 use crate::contact::Contact;
+use build_html::{Container, ContainerType, Html, HtmlContainer, HtmlPage, Table};
 
-fn contacts_to_table(contacts : Vec<Contact> )  -> String
-{
-    // Assuming the first document is a mapping
-    let mut table_html = String::new();
+#[derive(Debug)]
+struct Link {
+    href: String,
+    rel: String,
+    integrity: String,
+    crossorigin: String,
+}
 
-    // add some style
-    table_html.push_str("<style>\n");
-    table_html.push_str("table { border-collapse: collapse; width: 50%; }\n");
-    table_html.push_str("th { border: 1px solid #dddddd; text-align: left; padding: 8px; font-weight: bold; }\n");
-    table_html.push_str("td { border: 1px solid #dddddd; text-align: left; padding: 8px; }\n");
-    table_html.push_str("</style>\n");
-
-    // Start HTML table
-    table_html.push_str("<table>\n");
-
-    // header
-    table_html.push_str(&format!(
-        "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>\n",
-        "Name", "Address", "Email", "Mobile"
-    ));
-    for contact in contacts {
-        // Build table row
-        table_html.push_str(&format!(
-            "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n",
-            contact.name, contact.address, contact.email, contact.mobile
-        ));
+impl Link {
+    pub fn new(href: impl ToString, rel: impl ToString, integrity: impl ToString, crossorigin: impl ToString) -> Self {
+        Link { href: href.to_string(), rel: rel.to_string(), integrity: integrity.to_string(), crossorigin: crossorigin.to_string() }
     }
-    // End HTML table
-    table_html.push_str("</table>");
-    return table_html;
 }
 
-fn body_header(header : String, body : String) -> String
-{
-    return format!("<html><header>{}</header><body>{}</body></html>", header, body);
+impl Html for Link {
+    fn to_html_string(&self) -> String {
+        return format!("<link href=\"{}\", rel=\"{}\", integrity=\"{}\", crossorigin=\"{}\">", self.href, self.rel, self.integrity, self.crossorigin);
+    }
 }
 
-async fn contacts(State(phonebook): State<Arc<PhoneBook>>) -> Html<String>
+fn add_style(page: &mut HtmlPage)
 {
-    return Html(body_header("".to_string(), contacts_to_table(phonebook.get_all())));
+    page.add_container(Container::new(ContainerType::Header));
+    page.add_html(Link::new("https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css", "stylesheet", "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN", "anonymous"));
+}
+
+fn add_contact_view(page: &mut HtmlPage, contacts: Vec<Contact>)
+{
+    let source_table = contacts.iter().map(|contact|
+        { return vec![contact.name.clone(), contact.address.clone(), contact.email.clone(), contact.mobile.clone()]; }
+    );
+
+    let table = Table::from(source_table)
+        .with_attributes(vec![("class", "table table-striped table-hover")])
+        .with_header_row(vec!["Name", "Address", "Email", "Mobile"]);
+
+    page.add_table(table);
+}
+
+fn add_contact_form(page: &mut HtmlPage)
+{
+    page.add_raw(r#"
+    <form action="/add_contact" method=post>
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name"><br>
+    <label for="address">Address:</label><br>
+    <input type="text" id="address" name="address"><br>
+    <label for="email">Email:</label><br>
+    <input type="text" id="email" name="email"><br>
+    <label for="mobile">Mobile:</label><br>
+    <input type="text" id="mobile" name="mobile"><br><br>
+    <input type="submit" value="Add contact">
+    </form>"#);
+}
+
+async fn contacts(State(phonebook): State<Arc<Mutex<PhoneBook>>>) -> axum::response::Html<String>
+{
+    let mut page: HtmlPage = HtmlPage::new();
+    add_style(&mut page);
+    let data = phonebook.lock().expect("mutex was poisoned");
+    add_contact_view(&mut page, data.get_all());
+    add_contact_form(&mut page);
+    return axum::response::Html(page.to_html_string());
+}
+
+async fn add_contact(State(phonebook): State<Arc<Mutex<PhoneBook>>>, Form(sign_up): Form<Contact>)  -> Redirect {
+    let mut data = phonebook.lock().expect("mutex was poisoned");
+    let ok_added = data.add(sign_up);
+    return Redirect::to("/");
 }
 
 pub struct WebFrontend
@@ -59,10 +97,11 @@ impl PhonebookFrontend for WebFrontend
     fn run(phonebook: &mut PhoneBook)
     {
         // temporarily copy phonebook, we will copy it back when server ends
-        let server_phonebook = PhoneBook::new(phonebook.get_all());
-        let shared_state = Arc::new(server_phonebook);
+        let shared_state = Arc::new(Mutex::new(PhoneBook::new(phonebook.get_all())));
         // build our application with a single route
-        let app = Router::new().route("/", get(contacts))
+        let app = Router::new()
+            .route("/", get(contacts))
+            .route("/add_contact", post(add_contact))
             .with_state(shared_state);
         run(app);
     }
